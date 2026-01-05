@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../timer/presentation/widgets/rest_timer_sheet.dart';
 import '../providers/active_session_provider.dart';
 import '../widgets/exercise_set_logger.dart';
 
@@ -38,12 +37,10 @@ class _ActiveSessionPageState extends ConsumerState<ActiveSessionPage> {
                 ? exercises[_currentExerciseIndex]
                 : null;
 
-        final completedSets = exercises.fold<int>(
+        final loggedSets = exercises.fold<int>(
           0,
-          (sum, e) => sum + e.sets.where((s) => s.completed).length,
+          (sum, e) => sum + e.sets.length,
         );
-        final totalSets = exercises.fold<int>(0, (sum, e) => sum + e.sets.length);
-        final progress = totalSets > 0 ? completedSets / totalSets : 0.0;
 
         return Scaffold(
           appBar: AppBar(
@@ -63,32 +60,20 @@ class _ActiveSessionPageState extends ConsumerState<ActiveSessionPage> {
           ),
           body: Column(
             children: [
-              // Progress indicator with percentage
+              // Sets counter
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 color: theme.colorScheme.surfaceContainerHighest.withAlpha(128),
-                child: Column(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Progress: $completedSets/$totalSets sets',
-                          style: theme.textTheme.bodySmall,
-                        ),
-                        Text(
-                          '${(progress * 100).toInt()}%',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    LinearProgressIndicator(
-                      value: progress,
-                      minHeight: 6,
-                      borderRadius: BorderRadius.circular(3),
+                    Icon(Icons.fitness_center, size: 18, color: theme.colorScheme.primary),
+                    const SizedBox(width: 8),
+                    Text(
+                      '$loggedSets sets logged',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),
@@ -111,9 +96,7 @@ class _ActiveSessionPageState extends ConsumerState<ActiveSessionPage> {
                     itemBuilder: (context, index) {
                       final exercise = exercises[index];
                       final isSelected = index == _currentExerciseIndex;
-                      final completedCount =
-                          exercise.sets.where((s) => s.completed).length;
-                      final hasCompletedSets = completedCount > 0;
+                      final setCount = exercise.sets.length;
 
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -122,7 +105,7 @@ class _ActiveSessionPageState extends ConsumerState<ActiveSessionPage> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(exercise.exerciseName),
-                              if (hasCompletedSets) ...[
+                              if (setCount > 0) ...[
                                 const SizedBox(width: 4),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
@@ -130,11 +113,11 @@ class _ActiveSessionPageState extends ConsumerState<ActiveSessionPage> {
                                     vertical: 2,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.green,
+                                    color: theme.colorScheme.primary,
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: Text(
-                                    '$completedCount',
+                                    '$setCount',
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 10,
@@ -176,12 +159,6 @@ class _ActiveSessionPageState extends ConsumerState<ActiveSessionPage> {
                       )
                     : ExerciseSetLogger(
                         exercise: currentExercise,
-                        onSetComplete: (setId) {
-                          ref
-                              .read(activeSessionNotifierProvider.notifier)
-                              .markSetComplete(setId);
-                          _showRestTimer(context);
-                        },
                         onAddSet: (reps, weight) {
                           final setNumber = currentExercise.sets.length + 1;
                           ref
@@ -207,23 +184,8 @@ class _ActiveSessionPageState extends ConsumerState<ActiveSessionPage> {
               ),
             ],
           ),
-          // Improved FAB with label
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed: () => _showRestTimer(context),
-            icon: const Icon(Icons.timer),
-            label: const Text('Rest Timer'),
-            backgroundColor: theme.colorScheme.secondary,
-            foregroundColor: theme.colorScheme.onSecondary,
-          ),
         );
       },
-    );
-  }
-
-  void _showRestTimer(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => const RestTimerSheet(),
     );
   }
 

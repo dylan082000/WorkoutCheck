@@ -3,7 +3,6 @@ import '../../domain/entities/workout_session.dart';
 
 class ExerciseSetLogger extends StatefulWidget {
   final SessionExercise exercise;
-  final Function(int setId) onSetComplete;
   final Function(int reps, double weight) onAddSet;
   final Function(int setId, int reps, double weight)? onUpdateSet;
   final Function(int setId)? onDeleteSet;
@@ -11,7 +10,6 @@ class ExerciseSetLogger extends StatefulWidget {
   const ExerciseSetLogger({
     super.key,
     required this.exercise,
-    required this.onSetComplete,
     required this.onAddSet,
     this.onUpdateSet,
     this.onDeleteSet,
@@ -66,7 +64,6 @@ class _ExerciseSetLoggerState extends State<ExerciseSetLogger> {
                       final set = widget.exercise.sets[index];
                       return _SetCard(
                         set: set,
-                        onComplete: () => widget.onSetComplete(set.id),
                         onEdit: widget.onUpdateSet != null
                             ? () => _showEditDialog(set)
                             : null,
@@ -153,65 +150,44 @@ class _ExerciseSetLoggerState extends State<ExerciseSetLogger> {
 
 class _SetCard extends StatelessWidget {
   final ExerciseSetLog set;
-  final VoidCallback onComplete;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
 
   const _SetCard({
     required this.set,
-    required this.onComplete,
     this.onEdit,
     this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isCompleted = set.completed;
-
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
-      color: isCompleted
-          ? Colors.green.withAlpha(25)
-          : null,
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: isCompleted ? Colors.green : Colors.grey[300],
-          foregroundColor: Colors.white,
+          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+          foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
           child: Text('${set.setNumber}'),
         ),
         title: Text(
           '${set.reps} reps × ${set.weight} kg',
-          style: TextStyle(
-            fontWeight: isCompleted ? FontWeight.w600 : FontWeight.normal,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.w500),
         ),
-        subtitle: isCompleted
-            ? Text('Completed',
-                   style: TextStyle(color: Colors.green[700], fontSize: 12))
-            : null,
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (onEdit != null && !isCompleted)
+            if (onEdit != null)
               IconButton(
                 icon: const Icon(Icons.edit_outlined),
                 onPressed: onEdit,
                 tooltip: 'Edit set',
               ),
-            if (onDelete != null && !isCompleted)
+            if (onDelete != null)
               IconButton(
                 icon: const Icon(Icons.delete_outline, color: Colors.red),
                 onPressed: onDelete,
                 tooltip: 'Delete set',
               ),
-            if (!isCompleted)
-              IconButton(
-                icon: const Icon(Icons.check_circle_outline, color: Colors.green),
-                onPressed: onComplete,
-                tooltip: 'Mark as complete',
-              ),
-            if (isCompleted)
-              const Icon(Icons.check_circle, color: Colors.green),
           ],
         ),
       ),

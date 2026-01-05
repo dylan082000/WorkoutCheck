@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../domain/entities/workout_session.dart';
 import '../providers/history_provider.dart';
+import 'history_detail_page.dart';
 
 class HistoryPage extends ConsumerWidget {
   const HistoryPage({super.key});
@@ -49,7 +50,16 @@ class HistoryPage extends ConsumerWidget {
             itemCount: sessions.length,
             itemBuilder: (context, index) {
               final session = sessions[index];
-              return _SessionCard(session: session);
+              return _SessionCard(
+                session: session,
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => HistoryDetailPage(session: session),
+                    ),
+                  );
+                },
+              );
             },
           );
         },
@@ -60,8 +70,9 @@ class HistoryPage extends ConsumerWidget {
 
 class _SessionCard extends StatelessWidget {
   final WorkoutSession session;
+  final VoidCallback? onTap;
 
-  const _SessionCard({required this.session});
+  const _SessionCard({required this.session, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -73,12 +84,15 @@ class _SessionCard extends StatelessWidget {
 
     final totalSets = session.exercises.fold<int>(
       0,
-      (sum, e) => sum + e.sets.where((s) => s.completed).length,
+      (sum, e) => sum + e.sets.length,
     );
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -177,7 +191,24 @@ class _SessionCard extends StatelessWidget {
                 ),
               ),
             ],
+            // Tap indicator
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Tap to view details',
+                  style: TextStyle(
+                    color: Colors.grey[500],
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(Icons.chevron_right, size: 16, color: Colors.grey[500]),
+              ],
+            ),
           ],
+        ),
         ),
       ),
     );
